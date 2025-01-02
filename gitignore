@@ -1,0 +1,47 @@
+# Ignore environment files
+.env
+
+# Ignore specific local environment config files
+.env.local
+.env.*.local
+.env.*.secret
+
+# Ignore log files
+*.log
+*.log.*
+
+# Ignore temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore virtual environment folder
+venv/
+.env/
+
+# Ignore IDE-specific settings (e.g., for VSCode)
+.vscode/
+.idea/
+
+# Ignore dependency lock files (if using tools like pipenv or poetry)
+Pipfile.lock
+poetry.lock
+
+# Ignore build and distribution folders (for Python projects)
+build/
+dist/
+*.egg-info/
+
+# Ignore compiled artifacts (if you're using any compiled language in your project)
+*.out
+*.o
+*.a
+*.so
+*.dll
+*.exe
