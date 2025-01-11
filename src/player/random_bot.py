@@ -1,15 +1,20 @@
 import random
 
+from src.player.player import Player
 
-class RandomBot:
+
+class RandomBot(Player):
     def __init__(self, game):
+        super().__init__(0)
+
         self.game = game
         self.state = None
         self.action = {}
 
 
-    def perceive(self, game):
+    def perceive(self):
         pass
+
 
     def decide(self):
         self.state = self.game.get_state()
@@ -19,6 +24,7 @@ class RandomBot:
         self.action = action
 
         return self.action
+
 
     # Save the party in the dataset
     def sleep(self, result):

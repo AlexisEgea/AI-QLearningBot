@@ -1,9 +1,12 @@
 from matplotlib import pyplot as plt
 import random
 
-class QLearnerBot:
+from src.player.player import Player
+
+
+class QLearnerBot(Player):
     def __init__(self, game):
-        super().__init__()
+        super().__init__(0)
         # Progress
         self._results = []
         self._evals = []
