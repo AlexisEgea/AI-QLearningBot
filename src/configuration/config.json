@@ -1,3 +1,6 @@
 {
-
+  "number_player": 2,
+  "grid_size": 9,
+  "number_barrier": 10,
+  "barrier_size": 2
 }
