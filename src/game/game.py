@@ -93,24 +93,20 @@ class Game:
 
 
     def win(self):
-        grid_size = (len(self.grid.tab) + 1) // 2
-        player_position = []
-        for id in self.player_ids:
-            cell = self.grid.get_player(id)
-            player_position.append(cell)
+        player_position = [
+            self.grid.get_player(id) for id in self.player_ids
+        ]
 
         for player in player_position:
-            if player.id == 1 and player.x == grid_size * 2 - 2:  # Player 1 reaches the last row
-                return player.id
-            if player.id == 2 and player.x == 0:  # Player 2 reaches the first row
-                return player.id
-            if player.id == 3 and player.y == grid_size * 2 - 2:  # Player 3 reaches the last column
-                return player.id
-            if player.id == 4 and player.y == 0:  # Player 4 reaches the first column
-                return player.id
+            for player_id, victory_area in self.grid.player_victory_area.items():
+                if player.id == player_id:
+                    # Check if the player has reached their victory area
+                    if player.id in [1, 2] and player.x == victory_area:
+                        return player.id
+                    if player.id in [3, 4] and player.y == victory_area:
+                        return player.id
 
-        return 0
-
+        return 0  # No players win
 
     def end(self):
         winner = self.win()
