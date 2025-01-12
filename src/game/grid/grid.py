@@ -1,5 +1,6 @@
 import json
 import os
+from collections import deque
 
 from src.game.grid.cell_player import PlayerCell
 from src.game.grid.cell_barrier import BarrierCell
@@ -10,6 +11,8 @@ class Grid:
     def __init__(self):
         self.tab = []
         self.barrier_size = ""
+
+        self.player_victory_area = {}
 
         self.init_tab()
         # For printing purpose
@@ -44,7 +47,6 @@ class Grid:
                     return self.tab[i][j]
         raise ValueError(f"Player with id {id} not found.")
 
-
     def init_players(self, ids):
         size = len(self.tab)
         starting_positions = {
@@ -52,16 +54,24 @@ class Grid:
             3: [(0, size // 2), (size - 1, size // 2), (size // 2, 0)],  # 3 players
             4: [(0, size // 2), (size - 1, size // 2), (size // 2, 0), (size // 2, size - 1)]  # 4 players
         }
+
         if len(ids) not in starting_positions:
             raise ValueError("The number of players must be 2, 3, or 4.")
 
         positions = starting_positions[len(ids)]
+        winning_areas = {
+            1: len(self.tab) - 1,  # Player 1 wins when reaching the last row
+            2: 0,  # Player 2 wins when reaching the first row
+            3: len(self.tab) - 1,  # Player 3 wins when reaching the last column
+            4: 0  # Player 4 wins when reaching the first column
+        }
+
         for i, player_id in enumerate(ids):
             x, y = positions[i]
             cell = PlayerCell(player_id, x, y)
             self.add_playerCell(cell)
-            # print(f"Player {player_id} placed at ({x}, {y})")
 
+            self.player_victory_area[player_id] = winning_areas[player_id]
 
     def get_cell(self, x, y):
         return self.tab[x][y]
@@ -157,6 +167,9 @@ class Grid:
             elif current_label == 'y':
                 y_values.append(int(item))
 
+        x_values = sorted(x_values)
+        y_values = sorted(y_values)
+
         # print(f"x_values: {x_values}")
         # print(f"y_values: {y_values}")
 
@@ -188,15 +201,26 @@ class Grid:
                     grid_x = 2 * (x - 1)
                     if 0 <= grid_x < len(self.tab) and 0 <= y_start < len(self.tab[0]):
                         print(f"Placing horizontal barrier at [{grid_x}, {y_start}]")
-                        self.tab[grid_x][y_start] = BarrierCell(grid_x, y_start, "|", active=True)
+                        self.tab[grid_x][y_start].set_active(True)
+                        self.tab[grid_x][y_start].set_sign("|")
                     else:
                         print(f"Error: Coordinates [{grid_x}, {y_start}] are out of bounds.")
                         return False
 
-                # Add barrier between 'x's selected
-                for x in x_values[-1:0:-1]:
-                    x_between = 2 * (x - 1) - 1
-                    self.tab[x_between][y_start] = BarrierCell(x_between, y_start, "|", active=True)
+                if self.is_player_have_winning_path():
+                    for x in x_values:
+                        grid_x = 2 * (x - 1)
+                        self.tab[grid_x][y_start].set_active(False)
+                        self.tab[grid_x][y_start].set_sign(" ")
+                    return False
+                else:
+                    # Add barrier between 'x's selected
+                    for x in x_values[-1:0:-1]:
+                        x_between = 2 * (x - 1) - 1
+                        print(x_between)
+                        self.tab[x_between][y_start].set_active(True)
+                        self.tab[x_between][y_start].set_sign("|")
+
                     return True
 
             else:
@@ -225,15 +249,28 @@ class Grid:
                     grid_y = 2 * (y - 1)
                     if 0 <= x_start < len(self.tab) and 0 <= grid_y < len(self.tab[0]):
                         print(f"Placing vertical barrier at [{x_start}, {grid_y}]")
-                        self.tab[x_start][grid_y] = BarrierCell(x_start, grid_y, "-", active=True)
+                        self.tab[x_start][grid_y].set_active(True)
+                        self.tab[x_start][grid_y].set_sign("-")
                     else:
                         print(f"Error: Coordinates [{x_start}, {grid_y}] are out of bounds.")
                         return False
 
-                # Add barrier between 'y's selected
-                for y in y_values[-1:0:-1]:
-                    y_between = 2 * (y - 1) - 1
-                    self.tab[x_start][y_between] = BarrierCell(x_start, y_between, "-", active=True)
+                if self.is_player_have_winning_path():
+                    for y in y_values:
+                        grid_y = 2 * (y - 1)
+                        self.tab[x_start][grid_y].set_active(False)
+                        self.tab[x_start][grid_y].set_sign(" ")
+                    return False
+                else:
+                    # Add barrier between 'y's selected
+                    for y in y_values[-1:0:-1]:
+                        y_between = 2 * (y - 1) - 1
+                        self.tab[x_start][y_between].set_active(True)
+                        self.tab[x_start][y_between].set_sign("-")
+
+                    # Add 'end' barrier(s)
+                    self.add_end_y_barrier(x_start, y_values)
+
                     return True
             else:
                 print(f"Error number barrier, gap between position {y_values} more than {int(self.barrier_size) - 1}")
@@ -243,6 +280,79 @@ class Grid:
             return False
 
         # TODO: Not needed anymore, If-Else conditions have a return
+        return True
+
+
+    def add_end_y_barrier(self, x, y_values):
+        y_left = 2 * (y_values[0] - 1) - 1
+        y_previous_barrier = y_left - 1
+
+        y_right = 2 * y_values[len(y_values) - 1] - 1
+        y_next_barrier = y_right + 1
+
+        if 0 < y_left < len(self.tab):
+            if 0 <= y_previous_barrier < len(self.tab):
+                if self.tab[x][y_previous_barrier].active and self.tab[x][y_previous_barrier].sign == "-":
+                    self.tab[x][y_left].set_active(True)
+                    self.tab[x][y_left].set_sign("-")
+
+        if 0 < y_right < len(self.tab):
+            if 0 <= y_next_barrier < len(self.tab):
+                if self.tab[x][y_next_barrier].active and self.tab[x][y_next_barrier].sign == "-":
+                    self.tab[x][y_right].set_active(True)
+                    self.tab[x][y_right].set_sign("-")
+
+
+    def is_player_have_winning_path(self):
+            for player_id, victory_area in self.player_victory_area.items():
+                if self.is_player_isolated(player_id, victory_area):
+                    print(f"Error: Player {player_id} isolated, no winning path found")
+                    return True
+            return False
+
+
+    def is_player_isolated(self, player_id, victory_area):
+        # Retrieve the player's current position
+        cell_player = self.get_player(player_id)
+        start_x, start_y = cell_player.x, cell_player.y
+
+        # Initialize visited set to track visited cells
+        visited = set()
+        visited.add((start_x, start_y))
+
+        # Define the possible movements (top, bottom, left, right)
+        directions = [(-2, 0), (2, 0), (0, -2), (0, 2)]
+
+        # Breadth-First Search (BFS) to explore paths
+        queue = deque([(start_x, start_y)])
+        while queue:
+            current_x, current_y = queue.popleft()
+
+            # Check if we have reached a victory position -> player is not isolated
+            if player_id in [1, 2] and current_x == victory_area:
+                return False
+            if player_id in [3, 4] and current_y == victory_area:
+                return False
+
+            # Explore all valid movements
+            for dx, dy in directions:
+                next_x, next_y = current_x + dx, current_y + dy
+
+                # Check if the next cell is within bounds
+                if not (0 <= next_x < len(self.tab) and 0 <= next_y < len(self.tab)):
+                    continue
+
+                # Check if there's a barrier blocking the path
+                barrier_x, barrier_y = current_x + dx // 2, current_y + dy // 2
+                if isinstance(self.get_cell(barrier_x, barrier_y), BarrierCell) and self.get_cell(barrier_x, barrier_y).active:
+                    continue
+
+                # Check if the next cell has not been visited and is passable
+                if (next_x, next_y) not in visited and isinstance(self.tab[next_x][next_y], Cell):
+                    visited.add((next_x, next_y))
+                    queue.append((next_x, next_y))
+
+        # If we exit the loop without finding a victory position, the player is isolated
         return True
 
 
