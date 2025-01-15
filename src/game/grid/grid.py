@@ -221,6 +221,9 @@ class Grid:
                         self.tab[x_between][y_start].set_active(True)
                         self.tab[x_between][y_start].set_sign("|")
 
+                    # Add 'end' barrier(s)
+                    self.add_end_x_barrier(x_values, y_start)
+
                     return True
 
             else:
@@ -282,6 +285,24 @@ class Grid:
         # TODO: Not needed anymore, If-Else conditions have a return
         return True
 
+    def add_end_x_barrier(self, x_values, y):
+        x_left = 2 * (x_values[0] - 1) - 1
+        x_previous_barrier = x_left - 1
+
+        x_right = 2 * x_values[len(x_values) - 1] - 1
+        x_next_barrier = x_right + 1
+
+        if 0 < x_left < len(self.tab):
+            if 0 <= x_previous_barrier < len(self.tab):
+                if self.tab[x_previous_barrier][y].active and self.tab[x_previous_barrier][y].sign == "|":
+                    self.tab[x_left][y].set_active(True)
+                    self.tab[x_left][y].set_sign("|")
+
+        if 0 < x_right < len(self.tab):
+            if 0 <= x_next_barrier < len(self.tab):
+                if self.tab[x_next_barrier][y].active and self.tab[x_next_barrier][y].sign == "|":
+                    self.tab[x_next_barrier][y].set_active(True)
+                    self.tab[x_next_barrier][y].set_sign("|")
 
     def add_end_y_barrier(self, x, y_values):
         y_left = 2 * (y_values[0] - 1) - 1
@@ -373,7 +394,14 @@ class Grid:
             "top": (-2, 0),
             "bottom": (2, 0),
             "left": (0, -2),
-            "right": (0, 2)
+            "right": (0, 2),
+        }
+
+        specific_directions = {
+            "top_left": (-2, -2),
+            "top_right": (-2, 2),
+            "bottom_left": (2, -2),
+            "bottom_right": (2, 2)
         }
 
         if movement in directions:
@@ -447,10 +475,60 @@ class Grid:
 
             print(f"Error: Movement {movement} blocked.")
             return False
+
+        # Diagonal case
+        elif movement in specific_directions:
+            if self.is_diagonal_moove(movement, cell_player.x, cell_player.y):
+                dx, dy = specific_directions[movement]
+                new_x, new_y = cell_player.x + dx, cell_player.y + dy
+                self.remove_playerCell(cell_player)
+                cell_player.set_x(new_x)
+                cell_player.set_y(new_y)
+                self.add_playerCell(cell_player)
+
+                return True
         else:
             print(f"Error: Invalid movement '{movement}'.")
             return False
 
+
+
+    def is_diagonal_moove(self, movement, x, y):
+        movement1, movement2 = movement.split('_')
+        directions = { "top": (-2, 0), "bottom": (2, 0), "left": (0, -2), "right": (0, 2) }
+
+        dx_movement1, dy_movement1 = directions[movement1]
+        dx_movement2, dy_movement2 = directions[movement2]
+
+        if isinstance(self.tab[x + dx_movement1][y + dy_movement1], PlayerCell) and not self.tab[x + dx_movement1 // 2][y + dy_movement1 // 2].active:
+            if isinstance(self.tab[x + dx_movement2 // 2][y + dy_movement2 // 2], BarrierCell) and self.tab[x + dx_movement2 // 2][y + dy_movement2 // 2].active:
+                x_barrier = x + dx_movement1 + dx_movement2 // 2
+                y_barrier = y + dy_movement1 + dy_movement2 // 2
+                if not self.tab[x_barrier][y_barrier].active:
+                    return True
+
+        if isinstance(self.tab[x + dx_movement2][y + dy_movement2], PlayerCell) and not self.tab[x + dx_movement2 // 2][y + dy_movement2 // 2].active:
+            if isinstance(self.tab[x + dx_movement1 // 2][y + dy_movement1 // 2], BarrierCell) and self.tab[x + dx_movement1 //2][y + dy_movement1 // 2].active:
+                x_barrier = x + dx_movement2 + dx_movement1 // 2
+                y_barrier = y + dy_movement2 + dy_movement1 // 2
+                if not self.tab[x_barrier][y_barrier].active:
+                    return True
+
+        # if isinstance(self.tab[x + dx_movement1][y + dy_movement1], PlayerCell) and not self.tab[x + dx_movement1 // 2][y + dy_movement1 // 2].active:
+        #     if isinstance(self.tab[x + dx_movement1 + dx_movement2 // 2][y + dy_movement1 + dy_movement2 // 2], BarrierCell) and self.tab[x + dx_movement1 + dx_movement2 // 2][y + dy_movement1 + dy_movement2 // 2].active:
+        #         x_barrier = x + dx_movement2 + dx_movement1 // 2
+        #         y_barrier = y + dy_movement2 + dy_movement1 // 2
+        #         if not self.tab[x_barrier][y_barrier].active:
+        #             return True
+
+        # if isinstance(self.tab[x + dx_movement2][y + dy_movement2], PlayerCell) and not self.tab[x + dx_movement2 // 2][y + dy_movement2 // 2].active:
+        #     if isinstance(self.tab[x + dx_movement2 + dx_movement1 // 2][y + dy_movement2 + dy_movement1 // 2], BarrierCell) and self.tab[x + dx_movement2 + dx_movement1 //2][y + dy_movement2 + dy_movement1 // 2].active:
+        #         x_barrier = x + dx_movement1 + dx_movement2 // 2
+        #         y_barrier = y + dy_movement1 + dy_movement2 // 2
+        #         if not self.tab[x_barrier][y_barrier].active:
+        #             return True
+
+        return False
 
     # Returns the winning positions for a given player based on their ID.
     def get_winning_positions(self, player_id):
