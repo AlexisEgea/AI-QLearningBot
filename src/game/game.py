@@ -49,8 +49,18 @@ class Game:
         pass
 
 
-    def play_action(self, id, action):
-        cell = self.grid.get_player(id)
+    def play_action(self, player, action):
+        cell = self.grid.get_player(player.get_id())
+        if action.split()[0] == "block":
+            if not player.have_enough_barrier():
+                print(f"Player {player.get_id()} don't have any barrier left")
+                return False
+            else:
+                if self.grid.play_action(cell, action):
+                    player.decrement_barrier()
+                    print(f"Player {player.get_id()} remaining barrier= {player.get_barrier()}")
+                    return True
+
         return self.grid.play_action(cell, action)
 
 
@@ -73,7 +83,8 @@ class Game:
                 good_action = False
                 while not good_action:
                     action = current_player.decide()
-                    good_action = self.play_action(players[current_player_index].id, action)
+                    good_action = self.play_action(players[current_player_index], action)
+
                 print(self.grid)
 
                 result = self.score_state()
