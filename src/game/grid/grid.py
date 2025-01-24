@@ -220,10 +220,6 @@ class Grid:
                         print(x_between)
                         self.tab[x_between][y_start].set_active(True)
                         self.tab[x_between][y_start].set_sign("|")
-
-                    # Add 'end' barrier(s)
-                    self.add_end_x_barrier(x_values, y_start)
-
                     return True
 
             else:
@@ -271,9 +267,6 @@ class Grid:
                         self.tab[x_start][y_between].set_active(True)
                         self.tab[x_start][y_between].set_sign("-")
 
-                    # Add 'end' barrier(s)
-                    self.add_end_y_barrier(x_start, y_values)
-
                     return True
             else:
                 print(f"Error number barrier, gap between position {y_values} more than {int(self.barrier_size) - 1}")
@@ -285,43 +278,43 @@ class Grid:
         # TODO: Not needed anymore, If-Else conditions have a return
         return True
 
-    def add_end_x_barrier(self, x_values, y):
-        x_left = 2 * (x_values[0] - 1) - 1
-        x_previous_barrier = x_left - 1
-
-        x_right = 2 * x_values[len(x_values) - 1] - 1
-        x_next_barrier = x_right + 1
-
-        if 0 < x_left < len(self.tab):
-            if 0 <= x_previous_barrier < len(self.tab):
-                if self.tab[x_previous_barrier][y].active and self.tab[x_previous_barrier][y].sign == "|":
-                    self.tab[x_left][y].set_active(True)
-                    self.tab[x_left][y].set_sign("|")
-
-        if 0 < x_right < len(self.tab):
-            if 0 <= x_next_barrier < len(self.tab):
-                if self.tab[x_next_barrier][y].active and self.tab[x_next_barrier][y].sign == "|":
-                    self.tab[x_next_barrier][y].set_active(True)
-                    self.tab[x_next_barrier][y].set_sign("|")
-
-    def add_end_y_barrier(self, x, y_values):
-        y_left = 2 * (y_values[0] - 1) - 1
-        y_previous_barrier = y_left - 1
-
-        y_right = 2 * y_values[len(y_values) - 1] - 1
-        y_next_barrier = y_right + 1
-
-        if 0 < y_left < len(self.tab):
-            if 0 <= y_previous_barrier < len(self.tab):
-                if self.tab[x][y_previous_barrier].active and self.tab[x][y_previous_barrier].sign == "-":
-                    self.tab[x][y_left].set_active(True)
-                    self.tab[x][y_left].set_sign("-")
-
-        if 0 < y_right < len(self.tab):
-            if 0 <= y_next_barrier < len(self.tab):
-                if self.tab[x][y_next_barrier].active and self.tab[x][y_next_barrier].sign == "-":
-                    self.tab[x][y_right].set_active(True)
-                    self.tab[x][y_right].set_sign("-")
+    # def add_end_x_barrier(self, x_values, y):
+    #     x_left = 2 * (x_values[0] - 1) - 1
+    #     x_previous_barrier = x_left - 1
+    #
+    #     x_right = 2 * x_values[len(x_values) - 1] - 1
+    #     x_next_barrier = x_right + 1
+    #
+    #     if 0 < x_left < len(self.tab):
+    #         if 0 <= x_previous_barrier < len(self.tab):
+    #             if self.tab[x_previous_barrier][y].active and self.tab[x_previous_barrier][y].sign == "|":
+    #                 self.tab[x_left][y].set_active(True)
+    #                 self.tab[x_left][y].set_sign("|")
+    #
+    #     if 0 < x_right < len(self.tab):
+    #         if 0 <= x_next_barrier < len(self.tab):
+    #             if self.tab[x_next_barrier][y].active and self.tab[x_next_barrier][y].sign == "|":
+    #                 self.tab[x_next_barrier][y].set_active(True)
+    #                 self.tab[x_next_barrier][y].set_sign("|")
+    #
+    # def add_end_y_barrier(self, x, y_values):
+    #     y_left = 2 * (y_values[0] - 1) - 1
+    #     y_previous_barrier = y_left - 1
+    #
+    #     y_right = 2 * y_values[len(y_values) - 1] - 1
+    #     y_next_barrier = y_right + 1
+    #
+    #     if 0 < y_left < len(self.tab):
+    #         if 0 <= y_previous_barrier < len(self.tab):
+    #             if self.tab[x][y_previous_barrier].active and self.tab[x][y_previous_barrier].sign == "-":
+    #                 self.tab[x][y_left].set_active(True)
+    #                 self.tab[x][y_left].set_sign("-")
+    #
+    #     if 0 < y_right < len(self.tab):
+    #         if 0 <= y_next_barrier < len(self.tab):
+    #             if self.tab[x][y_next_barrier].active and self.tab[x][y_next_barrier].sign == "-":
+    #                 self.tab[x][y_right].set_active(True)
+    #                 self.tab[x][y_right].set_sign("-")
 
 
     def is_player_have_winning_path(self):
@@ -501,18 +494,32 @@ class Grid:
         dx_movement2, dy_movement2 = directions[movement2]
 
         if isinstance(self.tab[x + dx_movement1][y + dy_movement1], PlayerCell) and not self.tab[x + dx_movement1 // 2][y + dy_movement1 // 2].active:
-            if isinstance(self.tab[x + dx_movement2 // 2][y + dy_movement2 // 2], BarrierCell) and self.tab[x + dx_movement2 // 2][y + dy_movement2 // 2].active:
+            if isinstance(self.tab[x + dx_movement1 + dx_movement1 // 2][y + dy_movement1 + dy_movement1 // 2], BarrierCell) and self.tab[x + dx_movement1 + dx_movement1 // 2][y + dy_movement1 + dy_movement1 // 2].active:
                 x_barrier = x + dx_movement1 + dx_movement2 // 2
                 y_barrier = y + dy_movement1 + dy_movement2 // 2
                 if not self.tab[x_barrier][y_barrier].active:
                     return True
 
         if isinstance(self.tab[x + dx_movement2][y + dy_movement2], PlayerCell) and not self.tab[x + dx_movement2 // 2][y + dy_movement2 // 2].active:
-            if isinstance(self.tab[x + dx_movement1 // 2][y + dy_movement1 // 2], BarrierCell) and self.tab[x + dx_movement1 //2][y + dy_movement1 // 2].active:
-                x_barrier = x + dx_movement2 + dx_movement1 // 2
-                y_barrier = y + dy_movement2 + dy_movement1 // 2
+            if isinstance(self.tab[x + dx_movement2 + dx_movement2 // 2][y + dy_movement2 + dy_movement2 // 2], BarrierCell) and self.tab[x + dx_movement2 + dx_movement2 // 2][y + dy_movement2 + dy_movement2 // 2].active:
+                x_barrier = x + dx_movement1 + dx_movement2 // 2
+                y_barrier = y + dy_movement1 + dy_movement2 // 2
                 if not self.tab[x_barrier][y_barrier].active:
                     return True
+
+        # if isinstance(self.tab[x + dx_movement1][y + dy_movement1], PlayerCell) and not self.tab[x + dx_movement1 // 2][y + dy_movement1 // 2].active:
+        #     if isinstance(self.tab[x + dx_movement2 // 2][y + dy_movement2 // 2], BarrierCell) and self.tab[x + dx_movement2 // 2][y + dy_movement2 // 2].active:
+        #         x_barrier = x + dx_movement1 + dx_movement2 // 2
+        #         y_barrier = y + dy_movement1 + dy_movement2 // 2
+        #         if not self.tab[x_barrier][y_barrier].active:
+        #             return True
+
+        # if isinstance(self.tab[x + dx_movement2][y + dy_movement2], PlayerCell) and not self.tab[x + dx_movement2 // 2][y + dy_movement2 // 2].active:
+        #     if isinstance(self.tab[x + dx_movement1 // 2][y + dy_movement1 // 2], BarrierCell) and self.tab[x + dx_movement1 //2][y + dy_movement1 // 2].active:
+        #         x_barrier = x + dx_movement2 + dx_movement1 // 2
+        #         y_barrier = y + dy_movement2 + dy_movement1 // 2
+        #         if not self.tab[x_barrier][y_barrier].active:
+        #             return True
 
         # if isinstance(self.tab[x + dx_movement1][y + dy_movement1], PlayerCell) and not self.tab[x + dx_movement1 // 2][y + dy_movement1 // 2].active:
         #     if isinstance(self.tab[x + dx_movement1 + dx_movement2 // 2][y + dy_movement1 + dy_movement2 // 2], BarrierCell) and self.tab[x + dx_movement1 + dx_movement2 // 2][y + dy_movement1 + dy_movement2 // 2].active:
